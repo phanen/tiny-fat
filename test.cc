@@ -1,28 +1,27 @@
 // #include "util.h"
 // #include <stdio.h>
-// // #include <iostream>
-// // using namespace std;
+// #include <iostream>
+// using namespace std;
 
 // typedef struct a_t
 // {
 //     char a[100];
 // } a_t;
 
-// a_t o;
+// a_t *o;
 
 // int main()
 // {
-//     int *a = new int;
-//     delete a;
-//     delete a;
-
-//     a_t i;
-//     printf("%d\n", &i);
-//     printf("%d\n", i.a);
-
-//     printf("%d\n", &o);
-//     printf("%d\n", o.a);
-
+//     // printf("%d\n", o);
+//     // printf("%d\n", o + 1);
+//     for (int i = 0; i < 256; ++i)
+//     {
+//         cout << i << " :" << (unsigned char)(i) << endl;
+//     }
+//     // cout.clear();
+//     for (int i = 0; i < 256; ++i)
+//         cout << "aa" << endl;
+//     // cout << "aa" << endl;
 //     // a_t aa;
 //     // char cc[10];
 //     // char dd[10];

@@ -1,5 +1,6 @@
 
 build
 *.exe
+main.exe
 .vscode
 test.cc

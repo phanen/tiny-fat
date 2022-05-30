@@ -60,6 +60,10 @@ typedef struct FCB
     char filename[6] = "";
     u8_t first = FAT_EOF;
     u8_t *buf = nullptr;
+    int blkNum;
+    // addr <- curBlkId || offset
+    int curBlkId;
+    int offset;
 } fcb_t;
 
 typedef struct DCB
@@ -78,18 +82,24 @@ void fs_shutdown();
 // syscall about file
 //
 int fs_create(const char *filename, u8_t filetype);
-void fs_delete(const char *filename);
+int fs_delete(const char *filename);
 
 int fs_open(const char *filename);
-void fs_close(int fd, u8_t mode);
+void fs_close(int fd);
 
+// deprecated ... unused currently
 void fs_sync(u8_t mode);
 void fs_fcb_sync(int fd);
-void fs_read(int fd, void *buffer, int nbytes);
-void fs_write(int fd, void *buffer, int nbytes);
 
-// void fs_mkdir(char *filename);
-// void fs_ls(char *filename);
+// int fs_read(int fd, void *buffer, int nbytes);
+// int fs_write(int fd, void *buffer, int nbytes);
+
+// one read and one write
+int fs_read(int fd, void *buffer, int nbytes);
+int fs_write(int fd, void *buffer, int nbytes);
+
+int fs_ls();
+int fs_cd(const char *dirname);
 
 #endif // FATFS_H_
 
