@@ -33,12 +33,12 @@ void disk_formatter()
     *ptr++ = BPB_DirEntSz;
     disk_bwrite(&blk0, 0);
 
-    const u8_t FREE = u8_t(0x00);
+    const u8_t FAT_FREE = u8_t(0x00);
     int bid = 0 + BPB_RsrvSz;
     blk_t tmp;
     for (; bid < 0 + BPB_RsrvSz + BPB_FATSz; bid++)
     {
-        memset(&tmp, FREE, sizeof(blk_t));
+        memset(&tmp, FAT_FREE, sizeof(blk_t));
         disk_bwrite(&tmp, bid);
     }
 

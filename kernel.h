@@ -10,8 +10,8 @@
 // #include "disk.h"
 
 // blk state
-constexpr u8_t FREE = u8_t(0x00);
-constexpr u8_t EOF = u8_t(0xff);
+constexpr u8_t FAT_FREE = u8_t(0x00);
+constexpr u8_t FAT_EOF = u8_t(0xff);
 
 // attribute bit
 constexpr u8_t ATTR_DIRECTORY = 0x10;
@@ -21,6 +21,17 @@ constexpr u8_t ATTR_DIRECTORY = 0x10;
 // file type
 constexpr u8_t TYPE_FILE = 0x0;
 constexpr u8_t TYPE_DIR = 0x1;
+
+// close mode
+constexpr u8_t CLOSE_SYNC = 0x0;
+constexpr u8_t CLOSE_NO_SYNC = 0x1;
+
+// sync mode
+constexpr u8_t SYNC_HEAD = 0x1;
+constexpr u8_t SYNC_FCB = 0x2;
+constexpr u8_t SYNC_STRONG = SYNC_FCB | SYNC_HEAD;
+
+// constexpr u8_t TYPE_DIR = 0x1;
 
 // dos boot record / more formally -> os boot record(OBR)
 typedef struct DBR
@@ -47,14 +58,14 @@ typedef struct DirEnt
 typedef struct FCB
 {
     char filename[6] = "";
-    u8_t first = EOF;
+    u8_t first = FAT_EOF;
     u8_t *buf = nullptr;
 } fcb_t;
 
 typedef struct DCB
 {
     u8_t dirname[6] = "";
-    u8_t first = EOF;
+    u8_t first = FAT_EOF;
     dirEnt_t curDir[8];
     u8_t blkSz;     // dir size in blk
     u8_t maxEntNum; // dirEntNum * blkSz
@@ -66,12 +77,14 @@ void fs_shutdown();
 
 // syscall about file
 //
-int fs_create(const char *filename, int filetype);
+int fs_create(const char *filename, u8_t filetype);
 void fs_delete(const char *filename);
 
 int fs_open(const char *filename);
-void fs_close(int fd);
+void fs_close(int fd, u8_t mode);
 
+void fs_sync(u8_t mode);
+void fs_fcb_sync(int fd);
 void fs_read(int fd, void *buffer, int nbytes);
 void fs_write(int fd, void *buffer, int nbytes);
 
