@@ -20,11 +20,14 @@ int main()
 
     fs_shutdown();
 }
-void test2()
-{
-}
 
-// test create delete ls
+// void test2()
+// {
+//     test1();
+
+// }
+
+// test create delete ls cd
 void test1()
 {
     fs_create("fa", TYPE_FILE);
@@ -32,7 +35,12 @@ void test1()
     fs_create("fc", TYPE_FILE);
     fs_create("fd", TYPE_FILE);
     fs_create("fe", TYPE_FILE);
-    cout << 1 << endl;
+    // fs_create("ff", TYPE_FILE);
+    // fs_create("fg", TYPE_FILE);
+    // fs_create("fh", TYPE_FILE);
+    // fs_create("fi", TYPE_FILE);
+    // fs_create("fj", TYPE_FILE);
+
     fs_ls();
 
     fs_delete("fa");
@@ -45,6 +53,47 @@ void test1()
     fs_create("db", TYPE_DIR);
     fs_ls();
     fs_create("dc", TYPE_DIR);
+
+    int fd = fs_open("fd");
+    cout << fd << endl;
+    int sz = 65;
+    char *buf = new char[sz]; //
+
+    int len = fs_write(fd, buf, sz);
+    cout << "write len: " << len << endl;
+    fs_ls();
+    fs_cd("da");
+    fs_ls();
+    fs_create("dda", TYPE_DIR);
+    fs_create("dfa", TYPE_FILE);
+    fs_create("dfb", TYPE_FILE);
+
+    fs_create("dfc", TYPE_FILE);
+    fs_create("dfd", TYPE_FILE);
+    fs_create("dfe", TYPE_FILE);
+    fs_create("dff", TYPE_FILE);
+
+    fs_create("dfg", TYPE_FILE);
+    fs_create("dfh", TYPE_FILE);
+    fs_create("dfi", TYPE_FILE);
+    fs_create("dfj", TYPE_FILE);
+
+    fs_ls();
+
+    fs_cd("dda");
+    fs_ls();
+    fs_ls();
+    cout << 1 << endl;
+
+    // fs_create("dfc", TYPE_FILE);
+    // fs_create("dfc", TYPE_FILE);
+    // fs_create("dfc", TYPE_FILE);
+
+    // fs_create("dda", TYPE_DIR);
+    // fs_create("ddb", TYPE_DIR);
+    // fs_create("ddc", TYPE_DIR);
+    // fs_ls();
+    delete[] buf;
 }
 
 // test read write

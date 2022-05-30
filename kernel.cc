@@ -51,13 +51,37 @@ int fs_create(const char *filename, u8_t filetype)
     }
     else // not root dir
     {
-        int id = 0;
-        while (id < dcb->maxEntNum && dcb->curDir[id].filename[0] != '\0')
-            ++id;
-        if (id == dcb->maxEntNum)
+        int dirId = 0;
+        while (dirId < dcb->maxEntNum && dcb->curDir[dirId].filename[0] != '\0')
+            ++dirId;
+        if (dirId == dcb->maxEntNum)
         {
-            log("no dirEnt\n");
-            return -1;
+            // dynamic capacity of non-root dir
+            if (dcb->maxEntNum < 12)
+            {
+                int newId = fat_getId();
+                if (newId > datBlkNum)
+                {
+                    log("no fat\n");
+                    return -1;
+                }
+
+                blk_t *buf = (blk_t *)(dcb->curDir + dcb->maxEntNum);
+                int nextId = dcb->first;
+                while (nextId != FAT_EOF)
+                {
+                    fatId = nextId;
+                    nextId = fat[nextId];
+                }
+                fat[fatId] = newId;
+                ++dcb->blkSz;
+                dcb->maxEntNum += 4;
+            }
+            else
+            {
+                log("no dirEnt\n");
+                return -1;
+            }
         }
 
         int fatId = fat_getId();
@@ -68,19 +92,20 @@ int fs_create(const char *filename, u8_t filetype)
         }
 
         fat[fatId] = FAT_EOF;
-        strcpy(dcb->curDir[id].filename, filename);
-        dcb->curDir[id].attribute = attr;
-        dcb->curDir[id].first = fatId;
+        strcpy(dcb->curDir[dirId].filename, filename);
+        dcb->curDir[dirId].attribute = attr;
+        dcb->curDir[dirId].first = fatId;
     }
 
     // dir_init
     if (attr & ATTR_DIRECTORY)
     {
-        dirEnt_t tmp;
-        strcpy(tmp.filename, "..");
-        tmp.attribute = ATTR_DIRECTORY;
-        tmp.first = FAT_EOF; // no blk id
-        disk_bwrite((blk_t *)&tmp, fatId);
+        dirEnt_t tmp[dirEntNum];
+        memset(tmp, 0, sizeof(tmp));
+        strcpy(tmp[0].filename, "..");
+        tmp[0].attribute = ATTR_DIRECTORY;
+        tmp[0].first = FAT_ROOT; // no blk id
+        disk_bwrite((blk_t *)tmp, fatId);
     }
     return 0;
 }
@@ -325,7 +350,7 @@ int fs_write(int fd, void *buffer, int nbytes)
         for (int i = fcbs[fd].blkNum; i < blkNum; i++)
         {
             int newId = fat_getId();
-            if (newId == -1)
+            if (newId > datBlkNum)
             {
                 log("no fat\n");
                 return -1;
@@ -365,7 +390,7 @@ int fs_write(int fd, void *buffer, int nbytes)
             ++cnt;
         }
     }
-    return blkNum * dbr->BPB_BytsPerBlk;
+    return nbytes;
 }
 
 static int calc_sz(int fatId)
@@ -407,10 +432,10 @@ int fs_ls()
         {
             if (dcb->curDir[dirId].filename[0] != '\0')
             {
-                int sz = calc_sz(dcb->curDir[dirId].first);
+                int sz = dbr->BPB_BytsPerBlk * calc_sz(dcb->curDir[dirId].first);
                 printf("%  4d \t %6s \t %6s \n",
                        sz,
-                       dcb->curDir[dirId].filename ? "DIR" : "FILE",
+                       dcb->curDir[dirId].attribute ? "DIR" : "FILE",
                        dcb->curDir[dirId].filename);
             }
         }
@@ -421,4 +446,170 @@ int fs_ls()
 
 int fs_cd(const char *dirname)
 {
+    // locate the subsequent dir
+    if (inRoot) // must be child dir
+    {
+        int rtId = 0;
+        for (; rtId < rootEntNum; ++rtId)
+        {
+            if (rootDir[rtId].filename[0] != '\0' &&      // not empty
+                rootDir[rtId].attribute &&                // is dir
+                !strcmp(rootDir[rtId].filename, dirname)) // same name
+                break;
+        }
+        if (rtId == rootEntNum)
+        {
+            log("no sucb dir\n");
+            return -1;
+        }
+
+        // directly enter
+        // no need to write back
+        inRoot = false;
+        int fatId = rootDir[rtId].first;
+        int sz = 0;
+
+        dcb->first = fatId;
+        strcpy(dcb->dirname, dirname);
+
+        blk_t *buf = (blk_t *)dcb->curDir;
+
+        while (fatId != FAT_EOF)
+        {
+            disk_bread(buf++, fatId);
+            fatId = fat[fatId];
+            ++sz;
+        }
+        dcb->blkSz = sz;
+        dcb->maxEntNum = sz * dirEntNum;
+    }
+    else
+    {
+        int dirId = 0;
+        for (; dirId < dcb->maxEntNum; dirId++)
+        {
+            if (dcb->curDir[dirId].filename[0] != '\0' &&      // no empty
+                dcb->curDir[dirId].attribute &&                // is dir
+                !strcmp(dcb->curDir[dirId].filename, dirname)) // same name
+                break;
+        }
+        if (dirId == dirEntNum)
+        {
+            log("no such dir\n");
+            return -1;
+        }
+
+        // write dir info from mem to disk
+        int fatId = dcb->first;
+        blk_t *buf = (blk_t *)dcb->curDir;
+        while (fatId != FAT_EOF)
+        {
+            disk_bwrite(buf++, fatId);
+            fatId = fat[fatId];
+        }
+
+        // to father or child ?
+        if (!strcmp("..", dirname)) // back to father dir
+        {
+            fatId = dcb->curDir[dirId].first;
+            if (fatId == FAT_ROOT) // back to root
+            {
+                // update dcb state
+                inRoot = true; // eq to boolVal(dcb->dirname ==  "")
+                // strcmp(dcb->dirname, "");
+                // ...
+                dcb->curDir;
+                dcb->dirname[0] = '\0';
+                dcb->maxEntNum = 0;
+                dcb->blkSz = 0;
+                dcb->first = 0;
+            }
+            else // back not to root
+            {
+                strcmp(dcb->dirname, dirname);
+                // ...
+                dcb->first = fatId;
+                blk_t *buf = (blk_t *)dcb->curDir;
+                int sz = 0;
+                while (fatId != FAT_EOF)
+                {
+                    disk_bread(buf++, fatId);
+                    fatId = fat[fatId];
+                    ++sz;
+                }
+                dcb->blkSz = sz;
+                dcb->maxEntNum = sz * dirEntNum;
+            }
+        }
+        else // to child dir
+        {
+            // inRoot = false;
+            fatId = dcb->curDir[dirId].first;
+            strcmp(dcb->dirname, dirname);
+            // ...
+            dcb->first = fatId;
+            blk_t *buf = (blk_t *)dcb->curDir;
+            int sz = 0;
+            while (fatId != FAT_EOF)
+            {
+                disk_bread(buf++, fatId);
+                fatId = fat[fatId];
+                ++sz;
+            }
+            dcb->blkSz = sz;
+            dcb->maxEntNum = sz * dirEntNum;
+        }
+    } // inRoot ?
+    return 0;
+}
+// flush all buffer into disk
+void fs_sync(u8_t mode = SYNC_STRONG)
+{
+    if (mode & SYNC_HEAD)
+    {
+        blk_t tmp;
+        u8_t *ptr = (u8_t *)&tmp;
+
+        // store the fat into disk
+        u8_t *src = (u8_t *)fat;
+        int bid = fatBaseBid;
+        for (; bid < rootBaseBid; bid++, src += dbr->BPB_BytsPerBlk)
+            disk_bwrite((blk_t *)src, bid);
+
+        // load the root-dir into mem
+        src = (u8_t *)rootDir;
+        bid = rootBaseBid;
+        for (; bid < datBaseBid; bid++, src += dbr->BPB_BytsPerBlk)
+            disk_bwrite((blk_t *)src, bid);
+    }
+
+    if (mode & SYNC_FCB)
+    {
+        // flush the fcb
+        for (int fcbId = 0; fcbId < fcbNum; fcbId++)
+        {
+            if (fcbs[fcbId].filename[0] != '\0')
+                fs_fcb_sync(fcbId);
+        }
+    }
+}
+
+void fs_fcb_sync(int fd)
+{
+    // defensive
+    if (fd < 0 || fcbs[fd].filename[0] == '\0')
+    {
+        log("fd not availible\n");
+        return;
+    }
+
+    // flush the mem
+    int fatId = fcbs[fd].first;
+    blk_t *buf = (blk_t *)fcbs[fd].buf;
+    while (fatId != FAT_EOF)
+    {
+        disk_bwrite(buf, fatId);
+        fatId = fat[fatId];
+        ++buf;
+    }
 }

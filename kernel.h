@@ -12,6 +12,7 @@
 // blk state
 constexpr u8_t FAT_FREE = u8_t(0x00);
 constexpr u8_t FAT_EOF = u8_t(0xff);
+constexpr u8_t FAT_ROOT = u8_t(0xff);
 
 // attribute bit
 constexpr u8_t ATTR_DIRECTORY = 0x10;
@@ -49,9 +50,9 @@ typedef u8_t fatEnt_t;
 
 typedef struct DirEnt
 {
-    char filename[6];
+    char filename[6] = "\0";
     u8_t attribute;
-    u8_t first;
+    u8_t first = FAT_EOF;
 } dirEnt_t;
 
 // file control block
@@ -68,11 +69,12 @@ typedef struct FCB
 
 typedef struct DCB
 {
-    u8_t dirname[6] = "";
+    char dirname[6] = "";
     u8_t first = FAT_EOF;
-    dirEnt_t curDir[8];
-    u8_t blkSz;     // dir size in blk
-    u8_t maxEntNum; // dirEntNum * blkSz
+    dirEnt_t curDir[12]{};
+    int blkSz; // dir size in blk
+    int fat;
+    int maxEntNum; // dirEntNum * blkSz
 } dcb_t;
 
 // boot the file system
@@ -109,24 +111,3 @@ int fs_cd(const char *dirname);
 // cout << "**********************Commands List************************\n";
 // cout << "mkdir ls touch cd rm open close read wirte" << endl;
 // cout << "Type \"help\"  to see more infomation." << endl;
-
-// if (inRoot) // rename
-// {
-//     int rtId = 0;
-//     while (rtId < rootEntNum)
-//     {
-//         if (!strcmp(rootDir[rtId].filename, filename) && (filetype))
-//         {
-//             log("no rootEnt\n");
-//             return -1;
-//         }
-//     }
-// }
-// else // not in root
-// {
-//     int dirId = 0;
-//     if (!strcmp(dcb->curDir[dirId].filename, filename))
-//     {
-//         log("no dirEnt\n");
-//         return -1;
-//     }

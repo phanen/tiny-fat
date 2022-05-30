@@ -13,17 +13,18 @@ static dirEnt_t *rootDir;
 // sometimes open
 // u8_t fcb_map;
 static fcb_t *fcbs;
-static dcb_t *dcb = new dcb_t;
+static dcb_t *dcb;
 static bool inRoot;
 
-static int rootEntNum;
-static int dirEntNum;
+static int dirEntNum;   // limit in a blk
+static int rootEntNum;  // 2 * dirEntNum
 static int fatNum;      // 96
 static int fatBaseBid;  // 0 + 1 = 1
 static int rootBaseBid; // 0 + 1 + 3 = 4
 static int datBaseBid;  // 0 + 1 + 3 + 2 = 6
 static int datBlkNum;   // 80 - 6 = 74
 
+// num of files that can be opened
 static int fcbNum = 8;
 
 // boot the file system
@@ -70,6 +71,8 @@ void fs_boot()
     fcbs = new fcb_t[fcbNum];
     inRoot = true; // in root dir
     // fcb_map = 0b00000000;
+    dcb = new dcb_t{};
+    memset(dcb->curDir, 0, sizeof(dcb->curDir));
 }
 
 void fs_shutdown()
