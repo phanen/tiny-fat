@@ -20,7 +20,8 @@ static fatEnt_t *fat; // should align with the one in disk
 static dirEnt_t *rootDir;
 
 // sometimes open
-static fcb_t *fcbs = new fcb_t[8];
+// u8_t fcb_map;
+static fcb_t *fcbs;
 static dcb_t *dcb = new dcb_t;
 static bool inRoot;
 
@@ -32,7 +33,7 @@ static int rootBaseBid; // 0 + 1 + 3 = 4
 static int datBaseBid;  // 0 + 1 + 3 + 2 = 6
 static int datBlkNum;   // 80 - 6 = 74
 
-static u8_t rootMap;
+static int fcbNum = 8;
 
 #define log(info) printf((const char *)(info))
 
@@ -66,7 +67,7 @@ void fs_boot()
     int bid = fatBaseBid;
     for (; bid < rootBaseBid; ++bid, dst += dbr->BPB_BytsPerBlk)
         disk_bread((blk_t *)dst, bid);
-    // #include <vector>
+
     // load the root-dir into mem
     dirEntNum = dbr->BPB_BytsPerBlk / dbr->BPB_DirEntSz; // 4
     rootEntNum = dbr->BPB_RootSz * dirEntNum;            // 8
@@ -77,8 +78,9 @@ void fs_boot()
         disk_bread((blk_t *)dst, bid);
 
     datBlkNum = dbr->BPB_TotBlk - datBaseBid;
-
+    fcbs = new fcb_t[fcbNum];
     inRoot = true; // in root dir
+    // fcb_map = 0b00000000;
 }
 
 // update header content from mem to disk
@@ -102,12 +104,14 @@ void fs_update()
 
 void fs_shutdown()
 {
-    delete[] dbr;
+    delete dbr;
     delete[] fat;
     delete[] rootDir;
 
+    for (int i = 0; i < fcbNum; i++)
+        delete[] fcbs[i].buf;
     delete[] fcbs;
-    delete[] dcb;
+    delete dcb;
 }
 
 static int fat_getId()
@@ -119,7 +123,7 @@ static int fat_getId()
 }
 
 // static void root
-void fs_create(const char *filename, int filetype)
+int fs_create(const char *filename, int filetype)
 {
     u8_t attr = (filetype == TYPE_DIR ? 0x10 : 0x00);
     int fatId;
@@ -133,7 +137,7 @@ void fs_create(const char *filename, int filetype)
         if (rtId >= rootEntNum)
         {
             log("no rootEnt\n");
-            return;
+            return -1;
         }
 
         fatId = fat_getId();
@@ -141,7 +145,7 @@ void fs_create(const char *filename, int filetype)
         {
             fat[fatId] = FREE;
             log("no fat\n");
-            return;
+            return -1;
         }
 
         fat[fatId] = EOF;
@@ -157,14 +161,14 @@ void fs_create(const char *filename, int filetype)
         if (id == dcb->maxEntNum)
         {
             log("no dirEnt\n");
-            return;
+            return -1;
         }
 
         int fatId = fat_getId();
         if (fatId > datBlkNum)
         {
             log("no fat\n");
-            return;
+            return -1;
         }
 
         fat[fatId] = EOF;
@@ -174,15 +178,64 @@ void fs_create(const char *filename, int filetype)
     }
 
     // dir_init
-    if (attr | ATTR_DIRECTORY)
+    if (attr & ATTR_DIRECTORY)
     {
         dirEnt_t tmp;
         strcpy(tmp.filename, "..");
         tmp.first = 0xff; // father is root
         disk_bwrite((blk_t *)&tmp, fatId);
     }
+    return 0;
 }
 
-void fs_open()
+int fs_open(const char *filename)
 {
+
+    int rtId = 0;
+    int dirId = 0;
+    if (inRoot) // exist ?
+    {
+        while (rtId < rootEntNum && strcmp(rootDir[rtId].filename, filename))
+            ++rtId;
+        if (rtId == rootEntNum)
+        {
+            log("no such file\n");
+            return -1;
+        }
+
+        if (rootDir[rtId].attribute & ATTR_DIRECTORY)
+        {
+            log("cannot open dir");
+            return -1;
+        }
+    }
+    else
+    {
+        int dirId = 0;
+        while (dirId < rootEntNum && strcmp(dcb->curDir[dirId].filename, filename))
+            ++dirId;
+        if (dirId == dirEntNum)
+        {
+            log("no such file\n");
+            return -1;
+        }
+
+        if (dcb->curDir[dirId].attribute & ATTR_DIRECTORY)
+        {
+            log("cannot open dir");
+            return -1;
+        }
+    }
+
+    int fcbId = 0;
+    while (fcbId < fcbNum && fcbs[fcbId].filename[0] != '\0')
+        ++fcbId;
+    if (fcbId == fcbNum)
+    {
+        log("no free fcb\n");
+        return -1; // no available mem
+    }
+
+    strcmp(fcbs[fcbId].filename, filename);
+    return fcbId;
 }

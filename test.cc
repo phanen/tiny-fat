@@ -1,3 +1,4 @@
+// #include "util.h"
 // #include <stdio.h>
 // // #include <iostream>
 // // using namespace std;
@@ -11,6 +12,10 @@
 
 // int main()
 // {
+//     int *a = new int;
+//     delete a;
+//     delete a;
+
 //     a_t i;
 //     printf("%d\n", &i);
 //     printf("%d\n", i.a);

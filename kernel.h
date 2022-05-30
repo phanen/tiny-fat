@@ -46,14 +46,15 @@ typedef struct DirEnt
 // file control block
 typedef struct FCB
 {
-    u8_t filename[6];
-    u8_t first;
+    char filename[6] = "";
+    u8_t first = EOF;
+    u8_t *buf = nullptr;
 } fcb_t;
 
 typedef struct DCB
 {
-    u8_t dirname[6];
-    u8_t first;
+    u8_t dirname[6] = "";
+    u8_t first = EOF;
     dirEnt_t curDir[8];
     u8_t blkSz;     // dir size in blk
     u8_t maxEntNum; // dirEntNum * blkSz
@@ -65,7 +66,7 @@ void fs_shutdown();
 
 // syscall about file
 //
-void fs_create(const char *filename, int filetype);
+int fs_create(const char *filename, int filetype);
 void fs_delete(const char *filename);
 
 int fs_open(const char *filename);
@@ -85,3 +86,24 @@ void fs_write(int fd, void *buffer, int nbytes);
 // cout << "**********************Commands List************************\n";
 // cout << "mkdir ls touch cd rm open close read wirte" << endl;
 // cout << "Type \"help\"  to see more infomation." << endl;
+
+// if (inRoot) // rename
+// {
+//     int rtId = 0;
+//     while (rtId < rootEntNum)
+//     {
+//         if (!strcmp(rootDir[rtId].filename, filename) && (filetype))
+//         {
+//             log("no rootEnt\n");
+//             return -1;
+//         }
+//     }
+// }
+// else // not in root
+// {
+//     int dirId = 0;
+//     if (!strcmp(dcb->curDir[dirId].filename, filename))
+//     {
+//         log("no dirEnt\n");
+//         return -1;
+//     }
