@@ -13,18 +13,28 @@
 #include <sstream>
 using namespace std;
 
+void bash_help()
+{
+    cout << "TinyFAT - A FAT-LIKE File System (Simulator), version 0.0.1-debug (x86_64-pc-whatever-gnu)" << endl;
+    cout << "These shell commands are defined internally." << endl;
+    cout << "commands List:\n";
+    cout << "mkdir ls touch cd rm cat wrt" << endl;
+    cout << "Type \"help\"  to see more infomation." << endl;
+}
+
 void bash_main()
 {
+    bash_help();
     string input;
     stringstream ss;
     //  main loop
+    cout << "root@guest$ " << ends;
     while (getline(cin, input))
     {
         // whole line into ss
         ss << input;
         // back a word
         ss >> input;
-
         if (input == "exit")
         {
             break;
@@ -77,6 +87,10 @@ void bash_main()
             int len = fs_write(fd, input.c_str(), input.size());
             fs_close(fd);
         }
+        else if (input == "man" || input == "help")
+        {
+            bash_help();
+        }
         else
         {
             cout << "no such cmd" << endl;
@@ -84,6 +98,8 @@ void bash_main()
 
         ss.clear();
         ss.str("");
+        cout << "root@guest$ " << ends;
+
     } // end main loop
     return;
 }

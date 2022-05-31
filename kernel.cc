@@ -1,7 +1,7 @@
 /**
  * @file kernel.cc
  * @author phanen
- * @brief simulate the file system
+ * @brief simulate the file system, and its syscall
  * @date 2022-05-29
  *
  * @copyright Copyright (c) 2022. phanen
