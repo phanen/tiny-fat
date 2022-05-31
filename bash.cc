@@ -28,12 +28,13 @@ static vector<string> path_stk{"root"};
 
 static void show_prompt()
 {
-    cout << "root@guest: " << ends;
+    cout << "root@guest:";
     for (auto &&i : path_stk)
     {
-        cout << "/" << i << ends;
+        cout << "/" << i;
     }
-    cout << "$ " << ends;
+    cout << "$ ";
+    cout.flush();
 }
 
 void bash_main()

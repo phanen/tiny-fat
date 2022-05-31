@@ -4,3 +4,4 @@ build
 main.exe
 .vscode
 test.cc
+build
