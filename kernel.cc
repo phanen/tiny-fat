@@ -413,7 +413,7 @@ int fs_read(int fd, void *buffer, int nbytes)
 }
 
 //
-int fs_write(int fd, void *buffer, int nbytes)
+int fs_write(int fd, const void *buffer, int nbytes)
 {
     // check fd
     if (fd < 0 || fcbs[fd].filename[0] == '\0')

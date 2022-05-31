@@ -98,7 +98,7 @@ void fs_fcb_sync(int fd);
 
 // one read and one write
 int fs_read(int fd, void *buffer, int nbytes);
-int fs_write(int fd, void *buffer, int nbytes);
+int fs_write(int fd, const void *buffer, int nbytes);
 
 int fs_ls();
 int fs_cd(const char *dirname);

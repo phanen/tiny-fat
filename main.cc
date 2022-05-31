@@ -15,9 +15,9 @@ int main()
 {
     disk_formatter();
     fs_boot();
-    // bash_main();
+    bash_main();
     // test0();
-    test1();
+    // test1();
 
     fs_shutdown();
 }
