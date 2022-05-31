@@ -20,5 +20,8 @@ max(const _Tp &__a, const _Tp &__b)
 {
     return (__a > __b) ? __a : __b;
 }
+
+#define log(info) printf((const char *)(info))
+
 // min(1, 2);
 #endif

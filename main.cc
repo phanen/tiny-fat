@@ -10,13 +10,14 @@ void test1();
 void test2();
 void test3();
 
+void bash_main();
 int main()
 {
     disk_formatter();
     fs_boot();
-
+    bash_main();
     // test0();
-    test1();
+    // test1();
 
     fs_shutdown();
 }
@@ -159,6 +160,7 @@ void test1()
         cout << int(buf[i]) << " ";
     cout << endl;
     cout << "test 1 pass" << endl;
+    return;
 }
 
 // test read write
