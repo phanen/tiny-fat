@@ -35,35 +35,38 @@ void test1()
     fs_create("fc", TYPE_FILE);
     fs_create("fd", TYPE_FILE);
     fs_create("fe", TYPE_FILE);
-    // fs_create("ff", TYPE_FILE);
-    // fs_create("fg", TYPE_FILE);
-    // fs_create("fh", TYPE_FILE);
-    // fs_create("fi", TYPE_FILE);
-    // fs_create("fj", TYPE_FILE);
-
     fs_ls();
 
     fs_delete("fa");
     fs_delete("fb");
-    fs_ls();
     fs_delete("fc");
     fs_ls();
 
     fs_create("da", TYPE_DIR);
     fs_create("db", TYPE_DIR);
-    fs_ls();
     fs_create("dc", TYPE_DIR);
+    fs_ls();
 
-    int fd = fs_open("fd");
-    cout << fd << endl;
     int sz = 65;
     char *buf = new char[sz]; //
+    for (int i = 0; i < sz; i++)
+        buf[i] = i;
 
-    int len = fs_write(fd, buf, sz);
+    int fd1 = fs_open("fd");
+    cout << "fd1: " << fd1 << endl;
+    int len = fs_write(fd1, buf, sz);
     cout << "write len: " << len << endl;
+
+    len = fs_read(fd1, buf, sz);
+    cout << "read len: " << len << endl;
+    for (int i = 0; i < len; i++)
+        cout << int(buf[i]) << " ";
+    cout << endl;
     fs_ls();
+
     fs_cd("da");
     fs_ls();
+
     fs_create("dda", TYPE_DIR);
     fs_create("dfa", TYPE_FILE);
     fs_create("dfb", TYPE_FILE);
@@ -73,27 +76,89 @@ void test1()
     fs_create("dfe", TYPE_FILE);
     fs_create("dff", TYPE_FILE);
 
-    fs_create("dfg", TYPE_FILE);
-    fs_create("dfh", TYPE_FILE);
-    fs_create("dfi", TYPE_FILE);
-    fs_create("dfj", TYPE_FILE);
+    fs_create("ddg", TYPE_FILE);
+    fs_create("ddh", TYPE_FILE);
+    fs_create("ddi", TYPE_FILE);
+    fs_create("ddj", TYPE_DIR);
 
     fs_ls();
 
     fs_cd("dda");
+    fs_create("ddda", TYPE_DIR);
+    fs_create("dddb", TYPE_DIR);
     fs_ls();
+
+    fs_cd("ddda");
+    fs_create("dddda", TYPE_DIR);
+    fs_create("ddddb", TYPE_DIR);
+    // fs_create("dddfc", TYPE_DIR);
+    fs_create("dddfc", TYPE_FILE);
     fs_ls();
-    cout << 1 << endl;
 
-    // fs_create("dfc", TYPE_FILE);
-    // fs_create("dfc", TYPE_FILE);
-    // fs_create("dfc", TYPE_FILE);
+    sz = 96;
+    for (int i = 0; i <= 0xff; i++)
+        buf[i] = i;
+    int fd2 = fs_open("dddfc");
+    cout << "fd2: " << fd2 << endl;
 
-    // fs_create("dda", TYPE_DIR);
-    // fs_create("ddb", TYPE_DIR);
-    // fs_create("ddc", TYPE_DIR);
-    // fs_ls();
-    delete[] buf;
+    len = fs_write(fd2, buf, sz);
+    cout << "write len: " << len << endl;
+    len = fs_read(fd2, buf, sz);
+    cout << "read len: " << len << endl;
+    for (int i = 0; i < len; i++)
+        cout << int(buf[i]) << " ";
+    cout << endl;
+    fs_close(fd2);
+
+    fs_ls();
+    fs_cd("..");
+    fs_ls();
+    fs_close(fd1);
+    fd1 = fs_open("fd");
+    sz = 25;
+    len = fs_read(fd1, buf, sz);
+    cout << "read len: " << len << endl;
+    for (int i = 0; i < len; i++)
+        cout << int(buf[i]) << " ";
+    cout << endl;
+
+    fs_cd("da");
+    fs_ls();
+    fs_cd("dda");
+    fs_ls();
+    fs_create("dddc", TYPE_FILE);
+    fs_create("dddd", TYPE_FILE);
+    fs_create("ddde", TYPE_FILE);
+    fs_create("dddf", TYPE_FILE);
+    fs_ls();
+
+    fs_cd("ddda");
+    fs_ls();
+
+    fd2 = fs_open("dddfc");
+    sz = 66;
+    len = fs_read(fd2, buf, sz);
+    cout << "read len: " << len << endl;
+    for (int i = 0; i < len; i++)
+        cout << int(buf[i]) << " ";
+    cout << endl;
+    fs_close(fd2);
+
+    fs_delete("dddfc");
+    fs_ls();
+    fs_create("dddfc", TYPE_FILE);
+    fs_create("dddfd", TYPE_FILE);
+    fs_ls();
+
+    fd2 = fs_open("dddfd");
+    fs_ls();
+    sz = 66;
+    len = fs_read(fd2, buf, sz);
+    cout << "read len: " << len << endl;
+    for (int i = 0; i < len; i++)
+        cout << int(buf[i]) << " ";
+    cout << endl;
+    cout << "test 1 pass" << endl;
 }
 
 // test read write

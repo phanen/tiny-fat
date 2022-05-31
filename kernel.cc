@@ -65,7 +65,7 @@ int fs_create(const char *filename, u8_t filetype)
                     log("no fat\n");
                     return -1;
                 }
-
+                fat[newId] = FAT_EOF;
                 blk_t *buf = (blk_t *)(dcb->curDir + dcb->maxEntNum);
                 int nextId = dcb->first;
                 while (nextId != FAT_EOF)
@@ -174,11 +174,15 @@ int fs_delete(const char *filename)
     }
 
     // free the fat
+    // and clear the disk
+    blk_t clear;
+    memset(&clear, 0, sizeof(clear));
     while (fatId != FAT_EOF)
     {
-        u8_t tmp = fat[fatId];
+        u8_t nextId = fat[fatId];
+        disk_bwrite(&clear, fatId);
         fat[fatId] = FAT_FREE;
-        fatId = tmp;
+        fatId = nextId;
     }
     return 0;
 } // fs_delete
@@ -188,6 +192,7 @@ int fs_open(const char *filename)
 {
     int rtId = 0;
     int dirId = 0;
+
     if (inRoot) // exist ? find it in cur directory
     {
         while (rtId < rootEntNum &&
@@ -203,12 +208,12 @@ int fs_open(const char *filename)
     }
     else
     {
-        int dirId = 0;
-        while (dirId < rootEntNum &&
-               ((dcb->curDir[dirId].attribute & ATTR_DIRECTORY) ||
-                strcmp(dcb->curDir[dirId].filename, filename)))
+        dirId = 0;
+        while (dirId < dcb->maxEntNum &&
+               ((dcb->curDir[dirId].attribute & ATTR_DIRECTORY) || // is dir
+                strcmp(dcb->curDir[dirId].filename, filename)))    // or no name
             ++dirId;
-        if (dirId == dirEntNum)
+        if (dirId == dcb->maxEntNum)
         {
             log("no such file\n");
             return -1;
@@ -292,7 +297,7 @@ int fs_read(int fd, void *buffer, int nbytes)
 
     if (blkNum > fcbs[fd].blkNum)
     {
-        blkNum = dbr->BPB_BytsPerBlk;
+        blkNum = fcbs[fd].blkNum;
         offset = 0;
     }
 
@@ -309,10 +314,9 @@ int fs_read(int fd, void *buffer, int nbytes)
 
     if (offset)
     {
-        blk_t *tmp = new blk_t;
-        disk_bread(tmp, fatId);
-        memcpy(curBuf, tmp, offset);
-        delete tmp;
+        blk_t tmp;
+        disk_bread(&tmp, fatId);
+        memcpy(curBuf, &tmp, offset);
     }
 
     return blkNum * dbr->BPB_BytsPerBlk + offset;
@@ -375,11 +379,10 @@ int fs_write(int fd, void *buffer, int nbytes)
             ++cnt;
         }
 
-        blk_t *tmp = new blk_t{};
-        disk_bread(tmp, fatId);
-        memcpy(tmp, curBuf, offset);
-        disk_bwrite(tmp, fatId);
-        delete tmp;
+        blk_t tmp;
+        disk_bread(&tmp, fatId);
+        memcpy(&tmp, curBuf, offset);
+        disk_bwrite(&tmp, fatId);
     }
     else
     {
@@ -483,7 +486,7 @@ int fs_cd(const char *dirname)
         dcb->blkSz = sz;
         dcb->maxEntNum = sz * dirEntNum;
     }
-    else
+    else // cur not in root
     {
         int dirId = 0;
         for (; dirId < dcb->maxEntNum; dirId++)
@@ -514,11 +517,10 @@ int fs_cd(const char *dirname)
             fatId = dcb->curDir[dirId].first;
             if (fatId == FAT_ROOT) // back to root
             {
+                // before update, clear dcb
+                memset(&dcb->curDir, 0, sizeof(dcb->curDir));
                 // update dcb state
                 inRoot = true; // eq to boolVal(dcb->dirname ==  "")
-                // strcmp(dcb->dirname, "");
-                // ...
-                dcb->curDir;
                 dcb->dirname[0] = '\0';
                 dcb->maxEntNum = 0;
                 dcb->blkSz = 0;
@@ -526,6 +528,9 @@ int fs_cd(const char *dirname)
             }
             else // back not to root
             {
+                // before update, clear dcb
+                memset(&dcb->curDir, 0, sizeof(dcb->curDir));
+
                 strcmp(dcb->dirname, dirname);
                 // ...
                 dcb->first = fatId;
@@ -545,9 +550,11 @@ int fs_cd(const char *dirname)
         {
             // inRoot = false;
             fatId = dcb->curDir[dirId].first;
+            dcb->first = fatId;
+            // before update, clear dcb
+            memset(&dcb->curDir, 0, sizeof(dcb->curDir));
             strcmp(dcb->dirname, dirname);
             // ...
-            dcb->first = fatId;
             blk_t *buf = (blk_t *)dcb->curDir;
             int sz = 0;
             while (fatId != FAT_EOF)
