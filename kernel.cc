@@ -575,6 +575,7 @@ int fs_cd(const char *dirname)
         }
         dcb->blkSz = sz;
         dcb->maxEntNum = sz * dirEntNum;
+        return 1;
     }
     else // cur not in root
     {
@@ -635,6 +636,7 @@ int fs_cd(const char *dirname)
                 dcb->blkSz = sz;
                 dcb->maxEntNum = sz * dirEntNum;
             }
+            return 2;
         }
         else // to child dir
         {
@@ -655,9 +657,9 @@ int fs_cd(const char *dirname)
             }
             dcb->blkSz = sz;
             dcb->maxEntNum = sz * dirEntNum;
+            return 1;
         }
     } // inRoot ?
-    return 0;
 }
 
 // flush all buffer into disk

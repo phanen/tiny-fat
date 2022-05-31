@@ -11,9 +11,11 @@
 #include "kernel.h"
 #include <iostream>
 #include <sstream>
+#include <vector>
+
 using namespace std;
 
-void bash_help()
+static void bash_help()
 {
     cout << "TinyFAT - A FAT-LIKE File System (Simulator), version 0.0.1-debug (x86_64-pc-whatever-gnu)" << endl;
     cout << "These shell commands are defined internally." << endl;
@@ -22,13 +24,25 @@ void bash_help()
     cout << "Type \"help\"  to see more infomation." << endl;
 }
 
+static vector<string> path_stk{"root"};
+
+static void show_prompt()
+{
+    cout << "root@guest: " << ends;
+    for (auto &&i : path_stk)
+    {
+        cout << "/" << i << ends;
+    }
+    cout << "$ " << ends;
+}
+
 void bash_main()
 {
     bash_help();
     string input;
     stringstream ss;
     //  main loop
-    cout << "root@guest$ " << ends;
+    show_prompt();
     while (getline(cin, input))
     {
         // whole line into ss
@@ -60,7 +74,15 @@ void bash_main()
         else if (input == "cd")
         {
             ss >> input;
-            fs_cd(input.c_str());
+            int flg = fs_cd(input.c_str());
+            if (flg == 1)
+            {
+                path_stk.push_back(input);
+            }
+            else if (flg == 2)
+            {
+                path_stk.pop_back();
+            }
         }
         else if (input == "rm")
         {
@@ -98,7 +120,7 @@ void bash_main()
 
         ss.clear();
         ss.str("");
-        cout << "root@guest$ " << ends;
+        show_prompt();
 
     } // end main loop
     return;
