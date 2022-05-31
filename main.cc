@@ -15,9 +15,9 @@ int main()
 {
     disk_formatter();
     fs_boot();
-    bash_main();
+    // bash_main();
     // test0();
-    // test1();
+    test1();
 
     fs_shutdown();
 }
@@ -31,31 +31,29 @@ int main()
 // test create delete ls cd
 void test1()
 {
+    int fd1, fd2, len, sz;
     fs_create("fa", TYPE_FILE);
     fs_create("fb", TYPE_FILE);
     fs_create("fc", TYPE_FILE);
     fs_create("fd", TYPE_FILE);
     fs_create("fe", TYPE_FILE);
-    fs_ls();
-
     fs_delete("fa");
     fs_delete("fb");
     fs_delete("fc");
-    fs_ls();
-
     fs_create("da", TYPE_DIR);
     fs_create("db", TYPE_DIR);
     fs_create("dc", TYPE_DIR);
     fs_ls();
 
-    int sz = 65;
+    sz = 65;
     char *buf = new char[sz]; //
     for (int i = 0; i < sz; i++)
         buf[i] = i;
 
-    int fd1 = fs_open("fd");
+    fd1 = fs_open("fd");
+
     cout << "fd1: " << fd1 << endl;
-    int len = fs_write(fd1, buf, sz);
+    len = fs_write(fd1, buf, sz);
     cout << "write len: " << len << endl;
 
     len = fs_read(fd1, buf, sz);
@@ -63,7 +61,8 @@ void test1()
     for (int i = 0; i < len; i++)
         cout << int(buf[i]) << " ";
     cout << endl;
-    fs_ls();
+
+    fs_close(fd1);
 
     fs_cd("da");
     fs_ls();
@@ -71,17 +70,10 @@ void test1()
     fs_create("dda", TYPE_DIR);
     fs_create("dfa", TYPE_FILE);
     fs_create("dfb", TYPE_FILE);
-
     fs_create("dfc", TYPE_FILE);
     fs_create("dfd", TYPE_FILE);
     fs_create("dfe", TYPE_FILE);
     fs_create("dff", TYPE_FILE);
-
-    fs_create("ddg", TYPE_FILE);
-    fs_create("ddh", TYPE_FILE);
-    fs_create("ddi", TYPE_FILE);
-    fs_create("ddj", TYPE_DIR);
-
     fs_ls();
 
     fs_cd("dda");
@@ -99,7 +91,7 @@ void test1()
     sz = 96;
     for (int i = 0; i <= 0xff; i++)
         buf[i] = i;
-    int fd2 = fs_open("dddfc");
+    fd2 = fs_open("dddfc");
     cout << "fd2: " << fd2 << endl;
 
     len = fs_write(fd2, buf, sz);
@@ -113,8 +105,10 @@ void test1()
 
     fs_ls();
     fs_cd("..");
+    fs_cd("..");
+    fs_cd("..");
     fs_ls();
-    fs_close(fd1);
+
     fd1 = fs_open("fd");
     sz = 25;
     len = fs_read(fd1, buf, sz);

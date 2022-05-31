@@ -194,7 +194,7 @@ int fs_create(const char *filename, u8_t filetype)
         memset(tmp, 0, sizeof(tmp));
         strcpy(tmp[0].filename, "..");
         tmp[0].attribute = ATTR_DIRECTORY;
-        tmp[0].first = FAT_ROOT; // no blk id
+        tmp[0].first = inRoot ? FAT_ROOT : dcb->first; // set father dir
         disk_bwrite((blk_t *)tmp, fatId);
     }
     return 0;
