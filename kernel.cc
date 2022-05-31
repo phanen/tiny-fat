@@ -84,7 +84,7 @@ int fs_create(const char *filename, u8_t filetype)
             }
         }
 
-        int fatId = fat_getId();
+        fatId = fat_getId();
         if (fatId > datBlkNum)
         {
             log("no fat\n");
